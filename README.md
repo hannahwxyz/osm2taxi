@@ -5,15 +5,17 @@
 Tool to convert OpenStreetMap data to taxiway points used in Microsoft Flight Simulator scenery XML files.
 
 ## Description
-`osm2taxi` can take multiple OpenStreetMap way ID's and convert the linked nodes to a `<TaxiwayPoint>` object usable in scenery XML files for Microsoft Flight Simulator.
+`osm2taxi` is a tool to convert OpenStreetMap data to taxiway points used in MSFS scenery XML files. The program can read data from a .osm file or from a list of OSM way IDs. The program will output the `<TaxiwayPoint>` objects to a text file named `taxiway_points.txt` in the same directory as the executable.
 
 ## Usage
 
     osm2taxi.exe [wayId] [wayId] [wayId] ...
+    osm2taxi.exe [osm file]
 
 ## Example
 
     osm2taxi.exe 28845325 28845326
+    osm2taxi.exe airport.osm
 
 ## Output
 `osm2taxi` outputs the `<TaxiwayPoint>` objects to a text file named `taxiway_points.txt` in the same directory as the executable.

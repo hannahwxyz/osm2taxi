@@ -3,33 +3,34 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using System.Xml;
 
-// Check the arguments to make sure there's a least one way ID.
-if (args.Length < 1) {
-    Console.WriteLine("Please provide at least one way ID.");
-    return;
-}
-
-// Create an empty array to store the way IDs.
-string[] wayIds = new string[0];
-
-// Loop through the arguments and add them to the array if they do not contain letters.
-foreach (string arg in args) {
-    if (!arg.Any(char.IsLetter)) {
-        Array.Resize(ref wayIds, wayIds.Length + 1);
-        wayIds[wayIds.Length - 1] = arg;
-    }
-}
-
-// Get all the nodes from the way ID's and count them.
+// Create an empty array to store the nodes.
 string[] nodes = new string[0];
-foreach (string wayId in wayIds) {
-    string[] wayNodes = Nodes.Get(wayId);
-    foreach (string node in wayNodes) {
-        Array.Resize(ref nodes, nodes.Length + 1);
-        nodes[nodes.Length - 1] = node;
+
+// Bool containing whether the user wants to use the OSM file.
+bool useOsmFile = false;
+
+// Check if the first argument exists. If it does and it contains a .osm file, use that. 
+// If the first argument contains a number, then the way IDs are being provided as multiple arguments.
+if (args.Length > 0) {
+    if (args[0].Contains(".osm")) {
+        // Get the nodes from the OSM file.
+        useOsmFile = true;
+        nodes = Nodes.GetFromOsmFile(args[0]);
+    } else {
+        // Get the nodes from the way IDs and add them to the array.
+        foreach (string wayId in args) {
+            string[] wayNodes = Nodes.Get(wayId);
+            foreach (string node in wayNodes) {
+                Array.Resize(ref nodes, nodes.Length + 1);
+                nodes[nodes.Length - 1] = node;
+            }
+        }
     }
 }
+
+// Get the number of nodes.
 int nodeCount = nodes.Length;
 
 // Set the current node and MSFS index.
@@ -64,8 +65,31 @@ Console.WriteLine($"Removed {duplicateCount} duplicate nodes.");
 foreach (string node in nodes)
 {
     try {
-        // Get the coordinates for the current node.
-        (double latitude, double longitude) = Coordinates.Get(node);
+        // Variables for latitude and longitude
+        double latitude = 0.0;
+        double longitude = 0.0;
+
+        // Check if using the OSM file.
+        if (useOsmFile) {
+            // Load the OSM file and parse it to an XmlDocument.
+            XmlDocument osmFile = new XmlDocument();
+            osmFile.Load(args[0]);
+
+            // Get the latitude and longitude from the OSM file.
+            (latitude, longitude) = Coordinates.GetFromOsmFile(osmFile, node);
+        } else {
+            // Get the latitude and longitude from the OSM API.
+            (latitude, longitude) = Coordinates.Get(node);
+        }
+
+        // Check if latitude and longitude are 0.
+        if (latitude == 0 && longitude == 0) {
+            // Show the user the current progress.
+            Console.WriteLine($"Skipped node {currentNode} of {nodeCount}.");
+
+            // Skip the rest of the loop.
+            continue;
+        }
 
         // Create a new taxiway point string.
         string taxiwayPoint = $"<TaxiwayPoint index=\"{msfsIndex}\" type=\"NORMAL\" orientation=\"FORWARD\" lat=\"{latitude}\" lon=\"{longitude}\" />";
@@ -97,6 +121,6 @@ Console.WriteLine("Created taxiway_points.txt.");
 // Ask if the user wants to open the file in notepad, otherwise exit.
 Console.Write("Open in Notepad? (y/n): ");
 string openInNotepad = Console.ReadLine();
-if (openInNotepad == "y") {
+if (openInNotepad == "y" || openInNotepad == "Y") {
     Process.Start("notepad.exe", "taxiway_points.txt");
 }
