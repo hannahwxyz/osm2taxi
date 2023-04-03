@@ -2,6 +2,8 @@
 // Created by: Melody Wass <mel at strangemelody dot xyz>
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
+
 // Check the arguments to make sure there's a least one way ID.
 if (args.Length < 1) {
     Console.WriteLine("Please provide at least one way ID.");
@@ -46,25 +48,55 @@ if (startingIndex != "") {
 // Create an array to store the taxiway point strings.
 string[] taxiwayPoints = new string[nodeCount];
 
+// Check for duplicate nodes, remove them, and show the user the number of duplicates.
+int duplicateCount = 0;
+for (int i = 0; i < nodes.Length; i++) {
+    for (int j = i + 1; j < nodes.Length; j++) {
+        if (nodes[i] == nodes[j]) {
+            nodes[j] = "";
+            duplicateCount++;
+        }
+    }
+}
+Console.WriteLine($"Removed {duplicateCount} duplicate nodes.");
+
 // Loop through all nodes, get coordinates, create a new taxiway point string, and add it to the array.
 foreach (string node in nodes)
 {
-    // Get the coordinates for the current node.
-    (double latitude, double longitude) = Coordinates.Get(node);
+    try {
+        // Get the coordinates for the current node.
+        (double latitude, double longitude) = Coordinates.Get(node);
 
-    // Create a new taxiway point string.
-    string taxiwayPoint = $"<TaxiwayPoint index=\"{msfsIndex}\" type=\"NORMAL\" orientation=\"FORWARD\" lat=\"{latitude}\" lon=\"{longitude}\" />";
+        // Create a new taxiway point string.
+        string taxiwayPoint = $"<TaxiwayPoint index=\"{msfsIndex}\" type=\"NORMAL\" orientation=\"FORWARD\" lat=\"{latitude}\" lon=\"{longitude}\" />";
 
-    // Add the taxiway point string to the array.
-    taxiwayPoints[currentNode] = taxiwayPoint;
+        // Add the taxiway point string to the array.
+        taxiwayPoints[currentNode] = taxiwayPoint;
 
-    // Increment the current node and MSFS index.
-    currentNode++;
-    msfsIndex++;
+        // Increment the current node and MSFS index.
+        currentNode++;
+        msfsIndex++;
 
-    // Show the user the current progress.
-    Console.WriteLine($"Created taxiway point {currentNode} of {nodeCount}.");
+        // Show the user the current progress.
+        Console.WriteLine($"Created taxiway point {currentNode} of {nodeCount}.");
+    } catch (Exception) {
+        // Show the user the current progress.
+        Console.WriteLine($"Skipped node {currentNode} of {nodeCount}.");
+    }
 }
+
+// Show the user the number of taxiway points.
+Console.WriteLine($"Created {taxiwayPoints.Length} taxiway points.");
 
 // Create a new file and write the taxiway point strings to it.
 File.WriteAllLines("taxiway_points.txt", taxiwayPoints);
+
+// Show the user the file has been created.
+Console.WriteLine("Created taxiway_points.txt.");
+
+// Ask if the user wants to open the file in notepad, otherwise exit.
+Console.Write("Open in Notepad? (y/n): ");
+string openInNotepad = Console.ReadLine();
+if (openInNotepad == "y") {
+    Process.Start("notepad.exe", "taxiway_points.txt");
+}

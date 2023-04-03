@@ -1,5 +1,7 @@
 # osm2taxi
 
+[![.NET](https://github.com/strangemelody/osm2taxi/actions/workflows/dotnet.yml/badge.svg)](https://github.com/strangemelody/osm2taxi/actions/workflows/dotnet.yml)
+
 Tool to convert OpenStreetMap data to taxiway points used in Microsoft Flight Simulator scenery XML files.
 
 ## Description
